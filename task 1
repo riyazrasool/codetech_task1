@@ -1,0 +1,58 @@
+import pandas as pd
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.compose import ColumnTransformer
+from sklearn.pipeline import Pipeline
+from sklearn.model_selection import train_test_split
+
+# Load the data
+data = pd.read_csv('sample_dataset.csv')
+
+# Display the first few rows
+print("Initial Data:")
+print(data.head())
+
+# Handling missing values
+# Option 1: Drop rows with missing values
+data_cleaned = data.dropna()
+
+# Option 2: Fill missing values with the mean (for numerical columns)
+# Uncomment the line below if you prefer to fill missing values
+# data_cleaned = data.fillna(data.mean())
+
+# Removing duplicates
+data_cleaned = data_cleaned.drop_duplicates()
+
+print("\nCleaned Data:")
+print(data_cleaned.head())
+
+# Identifying numerical and categorical columns
+numerical_cols = data_cleaned.select_dtypes(include=['int64', 'float64']).columns
+categorical_cols = data_cleaned.select_dtypes(include=['object']).columns
+
+# Preprocessing pipeline
+preprocessor = ColumnTransformer(
+    transformers=[
+        ('num', StandardScaler(), numerical_cols),
+        ('cat', OneHotEncoder(), categorical_cols)
+    ])
+
+# Applying the transformations
+data_transformed = preprocessor.fit_transform(data_cleaned)
+
+# Converting the result back to a DataFrame
+data_transformed_df = pd.DataFrame(data_transformed)
+
+print("\nTransformed Data:")
+print(data_transformed_df.head())
+
+# Assuming the last column is the target variable
+X = data_transformed_df.iloc[:, :-1]
+y = data_transformed_df.iloc[:, -1]
+
+# Splitting the data
+X_train, X_temp, y_train, y_temp = train_test_split(X, y, test_size=0.3, random_state=42)
+X_val, X_test, y_val, y_test = train_test_split(X_temp, y_temp, test_size=0.5, random_state=42)
+
+print(f'\nTraining set size: {X_train.shape[0]}')
+print(f'Validation set size: {X_val.shape[0]}')
+print(f'Test set size: {X_test.shape[0]}')
